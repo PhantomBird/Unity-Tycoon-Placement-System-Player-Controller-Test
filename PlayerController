@@ -1,0 +1,92 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class PlayerController : MonoBehaviour
+{
+    [SerializeField] private GameObject buildArea;
+    [SerializeField] private GameObject objectToBuild;
+    [SerializeField] private GameObject builtObjects;
+
+    void Start()
+    {
+        
+    }
+
+    void Update()
+    {
+        Plane plane = new Plane(Vector3.up, 0);
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        float distance;
+        
+        if (plane.Raycast(ray, out distance))
+        {
+            Vector3 buildAreaSize = buildArea.transform.localScale;
+            Vector3 objectSize = objectToBuild.transform.localScale;
+
+            Vector3 worldPosition = ray.GetPoint(distance);
+
+            float x = Mathf.Clamp(Mathf.Floor(worldPosition.x), (-buildAreaSize.x / 2) + (objectSize.x / 2), (buildAreaSize.x / 2) - (objectSize.x / 2));
+            float y = (objectSize.y/2) + (objectSize.y/2);
+            float z = Mathf.Clamp(Mathf.Floor(worldPosition.z), (-buildAreaSize.z / 2) + (objectSize.z / 2), (buildAreaSize.z / 2) - (objectSize.z / 2));
+
+            if ((objectSize.x/2) % 1 != 0 && x % 1 == 0)
+            {
+                if (x > 0)
+                {
+                    x -= 0.5f;
+                } else if (x <= 0)
+                {
+                    x += 0.5f;
+                }
+            }
+
+            if ((objectSize.z / 2) % 1 != 0 && z % 1 == 0)
+            {
+                if (z > 0)
+                {
+                    z -= 0.5f;
+                }
+                else if (z <= 0)
+                {
+                    z += 0.5f;
+                }
+            }
+
+            objectToBuild.transform.position = new Vector3(x, y, z);
+        }
+        
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (CanPlace())
+            {
+                GameObject newObject = Instantiate(objectToBuild, objectToBuild.transform.position, objectToBuild.transform.rotation, builtObjects.transform);
+            }
+        }
+    }
+
+    bool CanPlace()
+    {
+        Collider[] collidersX = Physics.OverlapBox(objectToBuild.transform.position, objectToBuild.transform.localScale/2.1f);
+        Collider[] collidersZ = Physics.OverlapBox(objectToBuild.transform.position, objectToBuild.transform.localScale/2.1f);
+
+        foreach (Collider col in collidersX)
+        {
+            if (col.tag == "Structure" && col.gameObject != objectToBuild)
+            {
+                return false;
+            }   
+        }
+
+        foreach (Collider col in collidersZ)
+        {
+            if (col.tag == "Structure" && col.gameObject != objectToBuild)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+   
+}
